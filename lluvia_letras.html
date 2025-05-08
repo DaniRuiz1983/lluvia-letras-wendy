@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lluvia de Letras con Mensaje</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden; /* Oculta barras de scroll */
+            background-color: black; /* Fondo oscuro */
+            /* Usamos un contenedor para posicionar */
+            position: relative; /* Permite posicionar elementos hijos de forma absoluta respecto a este */
+            width: 100vw; /* Ancho total de la ventana */
+            height: 100vh; /* Alto total de la ventana */
+        }
+        canvas {
+            display: block;
+            /* El canvas llena el contenedor */
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+
+        /* Estilo para el texto "WENDY" */
+        #wendyText {
+            position: absolute;
+            top: 55%; /* Ajusta la posición vertical (50% es el centro) */
+            left: 50%; /* Centrado horizontalmente */
+            transform: translate(-50%, -50%); /* Ajuste para centrado exacto basado en el tamaño del elemento */
+            color: #FF69B4; /* Color rosa vibrante (Hot Pink) */
+            font-size: 6em; /* Tamaño grande */
+            font-weight: bold;
+            z-index: 10; /* Asegura que esté por encima del canvas */
+            user-select: none; /* Evita que el texto sea seleccionable */
+            pointer-events: none; /* Permite clics a través del elemento hacia el canvas si fuera necesario */
+            text-shadow: 0 0 10px #FF69B4, 0 0 20px #FF69B4, 0 0 30px #FF69B4; /* Efecto de brillo opcional */
+            white-space: nowrap; /* Evita que el texto "WENDY" se rompa en varias líneas si la pantalla es estrecha */
+        }
+
+         /* Estilo para la cara del gatito (usando emoji) */
+        #kittenFace {
+            position: absolute;
+            /* Posición: centrado horizontalmente, ligeramente encima de WENDY */
+            top: 35%; /* Ajusta la posición vertical */
+            left: 50%;
+            transform: translate(-50%, -50%); /* Centrar basado en el tamaño del elemento */
+            font-size: 5em; /* Tamaño grande para el emoji */
+            z-index: 10; /* Asegura que esté por encima del canvas */
+            user-select: none;
+            pointer-events: none;
+        }
+
+        /* Si quisieras usar una imagen real para el gatito, podrías hacerlo así */
+        /*
+        #kittenImage {
+            position: absolute;
+            top: 35%; // Ajusta según necesites
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100px; // Ajusta el tamaño
+            height: auto;
+            z-index: 10;
+            pointer-events: none;
+            // Necesitarías un elemento <img id="kittenImage" src="ruta/a/tu/imagen-gatito.png"> en el HTML
+        }
+        */
+
+    </style>
+</head>
+<body>
+
+<!-- Contenedor principal que abarca toda la ventana -->
+<div>
+    <!-- El canvas para la animación de lluvia de letras -->
+    <canvas id="letterRainCanvas"></canvas>
+
+    <!-- Elemento para el texto "WENDY", posicionado sobre el canvas -->
+    <div id="wendyText">WENDY</div>
+
+    <!-- Elemento para la cara del gatito (usamos un emoji simple aquí), posicionado sobre el canvas -->
+    <div id="kittenFace">🐱</div>
+    <!-- Si usaras una imagen: <img id="kittenImage" src="ruta/a/tu/imagen-gatito.png" alt="Cara de gatito"> -->
+</div>
+
+<script>
+    const canvas = document.getElementById('letterRainCanvas');
+    const ctx = canvas.getContext('2d');
+
+    // Función para ajustar el tamaño del canvas al tamaño de la ventana
+    function resizeCanvas() {
+         canvas.width = window.innerWidth;
+         canvas.height = window.innerHeight;
+         // No necesitamos redibujar nada estático en el canvas porque WENDY y el gatito son elementos HTML separados
+    }
+
+
+    const COLORES_VIBRANTES = [
+        '#FF0000', '#FFA500', '#FFFF00', '#00FF00', '#00FFFF', '#0000FF',
+        '#8A2BE2', '#FF00FF', '#FFA07A', '#ADFF2F', '#1E90FF', '#EE82EE',
+    ];
+
+    const POSSIBLE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+
+    let letters = [];
+
+    // Clase para representar una letra que cae (sin cambios)
+    class FallingLetter {
+        constructor(x, y, char, color, speed) {
+            this.x = x;
+            this.y = y;
+            this.char = char;
+            this.color = color;
+            this.speed = speed;
+            this.fontSize = 20;
+        }
+
+        draw() {
+            ctx.fillStyle = this.color;
+            ctx.font = `bold ${this.fontSize}px Helvetica`;
+            ctx.fillText(this.char, this.x, this.y);
+        }
+
+        update() {
+            this.y += this.speed;
+        }
+
+        isOffscreen() {
+            return this.y > canvas.height + this.fontSize;
+        }
+    }
+
+    // Función para crear una nueva letra aleatoria (sin cambios)
+    function createNewLetter() {
+        const char = POSSIBLE_CHARS[Math.floor(Math.random() * POSSIBLE_CHARS.length)];
+        // Ajusta la posición X inicial para evitar que las letras se creen justo donde está WENDY o el gatito
+        // Una solución simple es crear letras en un rango más amplio o con menos frecuencia cerca del centro
+        // O mantener la aleatoriedad y dejar que caigan por encima. Dejaremos la aleatoriedad simple por ahora.
+        const x = Math.random() * canvas.width;
+        const y = -20;
+        const color = COLORES_VIBRANTES[Math.floor(Math.random() * COLORES_VIBRANTES.length)];
+        const speed = Math.random() * 2 + 1;
+
+        letters.push(new FallingLetter(x, y, char, color, speed));
+    }
+
+    // Bucle principal de animación (sin cambios significativos)
+    function animate() {
+        // Borra el lienzo en cada frame
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        // Controla la densidad de las nuevas letras
+        if (Math.random() < 0.8) { // 80% de probabilidad de crear una nueva letra por frame
+             createNewLetter();
+        }
+
+        // Filtra las letras que han salido de la pantalla y actualiza/dibuja las restantes
+        letters = letters.filter(letter => {
+            letter.update(); // Mueve la letra
+            if (!letter.isOffscreen()) {
+                letter.draw(); // Dibuja la letra si todavía está en pantalla
+                return true; // Mantener esta letra en el array
+            }
+            return false; // Eliminar esta letra del array
+        });
+
+        // Solicita el siguiente frame
+        requestAnimationFrame(animate);
+    }
+
+    // Manejar el redimensionamiento de la ventana
+    window.addEventListener('resize', resizeCanvas);
+
+    // Ejecutar redimensionamiento inicial
+    resizeCanvas();
+
+    // Iniciar la animación con algunas letras iniciales
+     for (let i = 0; i < 20; i++) {
+         createNewLetter();
+     }
+    animate(); // Inicia el bucle de animación
+</script>
+
+</body>
+</html>
